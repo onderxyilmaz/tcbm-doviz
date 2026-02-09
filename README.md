@@ -1,47 +1,44 @@
-# TCMB Döviz Kurları Uygulaması
+# TCMB Döviz Kurları
 
-Türkiye Cumhuriyeti Merkez Bankası (TCMB) API'sini kullanarak döviz kurlarını görüntüleyen web uygulaması.
+TCMB (Türkiye Cumhuriyet Merkez Bankası) API'sini kullanarak güncel ve geçmiş döviz kurlarını görüntüleyen modern bir web uygulaması.
 
 ## Özellikler
 
-- ✅ Güncel döviz kurları (USD, EUR, CHF)
-- ✅ Tarih aralığına göre geçmiş veri görüntüleme
-- ✅ Modern ve responsive arayüz (Tailwind CSS)
-- ✅ Bildirim sistemi
-- ✅ Hata yönetimi
+- ✅ Güncel döviz kurları görüntüleme
+- ✅ Geçmiş döviz kurları sorgulama (1 hafta, 1 ay, 3 ay, 6 ay, 1 yıl veya özel tarih aralığı)
+- ✅ Dinamik para birimi seçimi (19 farklı para birimi)
+- ✅ Döviz çevirici
+- ✅ Kopyalama özelliği (formatlı ve ham değer)
+- ✅ Dark/Light mode desteği
+- ✅ Mobil uyumlu responsive tasarım
+- ✅ LocalStorage ile ayar saklama
 
 ## Teknolojiler
 
-### Backend
-- Express.js
-- Axios (HTTP istekleri)
-- CORS
-
 ### Frontend
-- React
-- React Router
-- Tailwind CSS
+- React 18
 - Vite
+- Tailwind CSS
+- React Router DOM
 - Axios
 
+### Backend
+- Express.js (local development)
+- Vercel Serverless Functions (production)
+
 ## Kurulum
+
+### Gereksinimler
+- Node.js 18+
+- npm veya yarn
 
 ### Backend Kurulumu
 
 ```bash
 cd backend
 npm install
-```
-
-`.env` dosyası oluşturun:
-```
-PORT=3001
-TCMB_API_KEY=8bC8YP8pNM
-TCMB_API_URL=https://evds2.tcmb.gov.tr/service/evds
-```
-
-Backend'i başlatın:
-```bash
+cp .env.example .env
+# .env dosyasını düzenleyin ve TCMB_API_KEY'inizi ekleyin
 npm run dev
 ```
 
@@ -52,25 +49,64 @@ Backend `http://localhost:3001` adresinde çalışacaktır.
 ```bash
 cd frontend
 npm install
-```
-
-Frontend'i başlatın:
-```bash
 npm run dev
 ```
 
 Frontend `http://localhost:3000` adresinde çalışacaktır.
 
-## Kullanım
+## Vercel Deployment
 
-1. Uygulamayı başlattıktan sonra tarayıcıda `http://localhost:3000` adresine gidin.
-2. **Güncel Kurlar** sayfasında bugünkü döviz kurlarını görüntüleyebilirsiniz.
-3. **Geçmiş Veriler** sayfasında tarih aralığı seçerek geçmiş döviz kurlarını görüntüleyebilirsiniz.
+### 1. GitHub'a Push
+```bash
+git add .
+git commit -m "Deploy to Vercel"
+git push origin master
+```
+
+### 2. Vercel'e Deploy
+
+1. [Vercel](https://vercel.com) hesabınıza giriş yapın
+2. "New Project" seçin
+3. GitHub repo'nuzu seçin: `onderxyilmaz/tcbm-doviz`
+4. Branch: `master` seçin
+5. **Root Directory**: Boş bırakın (root'tan deploy edilecek)
+6. **Build Command**: `cd frontend && npm install && npm run build`
+7. **Output Directory**: `frontend/dist`
+8. **Environment Variables** ekleyin:
+   - `TCMB_API_KEY`: TCMB API anahtarınız
+   - `TCMB_API_URL`: `https://evds2.tcmb.gov.tr/service/evds` (varsayılan)
+9. "Deploy" butonuna tıklayın
+
+### 3. Serverless Functions
+
+Backend API'leri `/api` klasöründe Vercel serverless functions olarak çalışır:
+- `/api/currencies` - Tüm para birimlerini listeler
+- `/api/rates/current` - Güncel döviz kurlarını getirir
+- `/api/rates/historical` - Geçmiş döviz kurlarını getirir
+
+Frontend otomatik olarak production'da `/api` endpoint'lerini kullanır.
 
 ## API Endpoints
 
-### GET /api/rates/current
+### GET /api/currencies
+Tüm desteklenen para birimlerini döndürür.
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    { "code": "USD", "name": "ABD Doları", "nameEn": "US Dollar" },
+    ...
+  ]
+}
+```
+
+### GET /api/rates/current?currencies=USD,EUR,CHF
 Güncel döviz kurlarını getirir.
+
+**Query Parameters:**
+- `currencies` (optional): Virgülle ayrılmış para birimi kodları
 
 **Response:**
 ```json
@@ -79,21 +115,22 @@ Güncel döviz kurlarını getirir.
   "data": [
     {
       "currency": "USD",
-      "buyRate": 34.1234,
-      "sellRate": 34.5678,
+      "buyRate": 43.5325,
+      "sellRate": 43.5450,
       "date": "10-02-2026"
-    }
+    },
+    ...
   ]
 }
 ```
 
-### GET /api/rates/historical
+### GET /api/rates/historical?currency=USD&startDate=2026-01-01&endDate=2026-02-10
 Tarih aralığına göre geçmiş döviz kurlarını getirir.
 
 **Query Parameters:**
-- `currency`: Para birimi (USD, EUR, CHF)
-- `startDate`: Başlangıç tarihi (YYYY-MM-DD)
-- `endDate`: Bitiş tarihi (YYYY-MM-DD)
+- `currency` (required): Para birimi kodu
+- `startDate` (required): Başlangıç tarihi (YYYY-MM-DD)
+- `endDate` (required): Bitiş tarihi (YYYY-MM-DD)
 
 **Response:**
 ```json
@@ -101,16 +138,23 @@ Tarih aralığına göre geçmiş döviz kurlarını getirir.
   "success": true,
   "data": [
     {
-      "date": "01-02-2026",
-      "buyRate": 34.1234,
-      "sellRate": 34.5678
-    }
+      "date": "10-02-2026",
+      "buyRate": 43.5325,
+      "sellRate": 43.5450
+    },
+    ...
   ]
 }
 ```
 
-## Notlar
+## Desteklenen Para Birimleri
 
-- Hafta sonları ve resmi tatil günlerinde TCMB verileri güncellenmediği için o tarihlerdeki veriler gösterilmeyebilir.
-- İnternet bağlantısı gereklidir.
-- API anahtarı `.env` dosyasında saklanmalıdır.
+USD, EUR, CHF, GBP, JPY, AUD, CAD, SEK, NOK, DKK, SAR, KWD, QAR, BGN, RON, RUB, CNY, PKR, IRR
+
+## Lisans
+
+MIT License
+
+## Yazar
+
+Onder Yilmaz
