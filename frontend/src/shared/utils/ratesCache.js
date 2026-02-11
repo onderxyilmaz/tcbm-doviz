@@ -11,22 +11,18 @@ function getTodayTurkey() {
 }
 
 /**
- * Seçili para birimleri için cache'in geçerli olup olmadığını kontrol eder.
- * Cache geçerliyse rate verilerini döndürür, değilse null.
+ * Cache'teki tüm rate verilerini döndürür. Geçersizse null.
  */
-export function getCachedRates(currencies) {
+function getFullCache() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return null;
 
-    const { rates, date, currencies: cachedCurrencies } = JSON.parse(raw);
+    const { rates, date } = JSON.parse(raw);
     const today = getTodayTurkey();
 
-    const currenciesMatch =
-      JSON.stringify([...currencies].sort()) === JSON.stringify([...cachedCurrencies].sort());
-
-    if (date === today && currenciesMatch && Array.isArray(rates) && rates.length > 0) {
-      return rates;
+    if (date === today && Array.isArray(rates) && rates.length > 0) {
+      return { rates, date };
     }
     return null;
   } catch {
@@ -35,17 +31,57 @@ export function getCachedRates(currencies) {
 }
 
 /**
- * API'den alınan rate verilerini cache'e yazar.
+ * Seçili para birimleri için cache'te veri var mı kontrol eder.
+ * Tümü varsa rate listesini döndürür, eksik varsa null.
  */
-export function setCachedRates(rates, currencies) {
+export function getCachedRates(currencies) {
+  const cache = getFullCache();
+  if (!cache || currencies.length === 0) return null;
+
+  const ratesByCurrency = Object.fromEntries(cache.rates.map((r) => [r.currency, r]));
+  const result = [];
+
+  for (const code of currencies) {
+    if (!ratesByCurrency[code]) return null;
+    result.push(ratesByCurrency[code]);
+  }
+
+  return result;
+}
+
+/**
+ * Cache'te hangi para birimlerinin eksik olduğunu döndürür.
+ */
+export function getMissingCurrencies(currencies) {
+  const cache = getFullCache();
+  if (!cache) return [...currencies];
+
+  const cachedCodes = new Set(cache.rates.map((r) => r.currency));
+  return currencies.filter((code) => !cachedCodes.has(code));
+}
+
+/**
+ * Yeni rate verilerini cache'e ekler veya günceller (merge).
+ */
+export function mergeCachedRates(newRates) {
   try {
-    const date = rates[0]?.date || getTodayTurkey();
+    const today = getTodayTurkey();
+    const cache = getFullCache();
+
+    let rates = cache ? [...cache.rates] : [];
+    const byCurrency = new Map(rates.map((r) => [r.currency, r]));
+
+    for (const rate of newRates) {
+      byCurrency.set(rate.currency, rate);
+    }
+
+    rates = Array.from(byCurrency.values());
+
     localStorage.setItem(
       CACHE_KEY,
       JSON.stringify({
         rates,
-        date,
-        currencies,
+        date: newRates[0]?.date || today,
       })
     );
   } catch (e) {

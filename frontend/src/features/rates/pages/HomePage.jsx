@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ratesApi } from '../../../shared/services/api';
 import { useSelectedCurrencies } from '../../../shared/hooks/useSelectedCurrencies';
-import { getCachedRates, setCachedRates } from '../../../shared/utils/ratesCache';
+import { getCachedRates, getMissingCurrencies, mergeCachedRates } from '../../../shared/utils/ratesCache';
 import { useNotification } from '../../../shared/hooks/useNotification';
 import Notification from '../../../shared/components/Notification';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
@@ -60,7 +60,7 @@ function HomePage() {
     try {
       setLoading(true);
 
-      // Önce cache'i kontrol et - bugüne ait veri varsa API'ye gitme
+      // Önce cache'i kontrol et - seçili kurların hepsi varsa API'ye gitme
       const cached = getCachedRates(selectedCurrencies);
       if (cached) {
         setRates(cached);
@@ -68,11 +68,13 @@ function HomePage() {
         return;
       }
 
-      const response = await ratesApi.getCurrentRates(selectedCurrencies);
+      // Sadece cache'te eksik olan kurları çek
+      const missing = getMissingCurrencies(selectedCurrencies);
+      const response = await ratesApi.getCurrentRates(missing);
 
       if (response.success) {
-        setRates(response.data);
-        setCachedRates(response.data, selectedCurrencies);
+        mergeCachedRates(response.data);
+        setRates(getCachedRates(selectedCurrencies));
       } else {
         showNotification('Döviz kurları yüklenirken bir hata oluştu.', 'error');
       }
