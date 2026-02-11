@@ -333,7 +333,7 @@ function HomePage() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner message="Döviz kurları yükleniyor..." />;
   }
 
   // Döviz çeviri hesaplama
@@ -722,7 +722,7 @@ function HomePage() {
         {/* Geçmiş Veriler Tablosu */}
         {loadingHistorical ? (
           <div className="py-8">
-            <LoadingSpinner />
+            <LoadingSpinner message="Geçmiş veriler getiriliyor..." />
           </div>
         ) : historicalRates.length > 0 ? (
           <div className="overflow-x-auto">

@@ -244,7 +244,7 @@ function HistoricalPage() {
         </form>
       </div>
 
-      {loading && <LoadingSpinner />}
+      {loading && <LoadingSpinner message="Geçmiş veriler getiriliyor..." />}
 
       {!loading && rates.length > 0 && (
         <div className="bg-white shadow rounded-lg overflow-hidden">

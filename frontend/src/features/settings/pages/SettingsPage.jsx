@@ -55,7 +55,7 @@ function SettingsPage() {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner message="Döviz listesi yükleniyor..." />;
   }
 
   return (
