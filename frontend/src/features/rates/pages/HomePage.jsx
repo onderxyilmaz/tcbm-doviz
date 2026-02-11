@@ -185,22 +185,26 @@ function HomePage() {
       endDate = dateRange.endDate;
     }
 
+    const modalState = { currency, period: period || 'custom', startDate, endDate };
+
     // Önce cache'i kontrol et
     const cached = getCachedHistoricalRates(currency, startDate, endDate);
     if (cached) {
       setHistoricalRates(cached);
-      setSelectedCurrency({ currency, period: period || 'custom', startDate, endDate });
+      setSelectedCurrency(modalState);
       return;
     }
 
-    try {
-      setLoadingHistorical(true);
+    // Modal hemen açılsın, veri yüklenirken loading gösterilsin
+    setSelectedCurrency(modalState);
+    setHistoricalRates([]);
+    setLoadingHistorical(true);
 
+    try {
       const response = await ratesApi.getHistoricalRates(currency, startDate, endDate);
 
       if (response.success) {
         setHistoricalRates(response.data);
-        setSelectedCurrency({ currency, period: period || 'custom', startDate, endDate });
         setCachedHistoricalRates(currency, startDate, endDate, response.data);
         if (response.data.length === 0) {
           showNotification('Seçilen tarih aralığında veri bulunamadı.', 'info');
