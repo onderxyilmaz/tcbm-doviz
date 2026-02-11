@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ratesApi } from '../../../shared/services/api';
 import { useSelectedCurrencies } from '../../../shared/hooks/useSelectedCurrencies';
-import { getCachedRates, getMissingCurrencies, mergeCachedRates } from '../../../shared/utils/ratesCache';
+import {
+  getCachedRates,
+  getMissingCurrencies,
+  mergeCachedRates,
+  getCachedHistoricalRates,
+  setCachedHistoricalRates,
+} from '../../../shared/utils/ratesCache';
 import { useNotification } from '../../../shared/hooks/useNotification';
 import Notification from '../../../shared/components/Notification';
 import LoadingSpinner from '../../../shared/components/LoadingSpinner';
@@ -169,26 +175,33 @@ function HomePage() {
 
   // Geçmiş verileri getir
   const fetchHistoricalRates = async (currency, period = null, customStartDate = null, customEndDate = null) => {
+    let startDate, endDate;
+    if (customStartDate && customEndDate) {
+      startDate = customStartDate;
+      endDate = customEndDate;
+    } else {
+      const dateRange = getDateRange(period || '1month');
+      startDate = dateRange.startDate;
+      endDate = dateRange.endDate;
+    }
+
+    // Önce cache'i kontrol et
+    const cached = getCachedHistoricalRates(currency, startDate, endDate);
+    if (cached) {
+      setHistoricalRates(cached);
+      setSelectedCurrency({ currency, period: period || 'custom', startDate, endDate });
+      return;
+    }
+
     try {
       setLoadingHistorical(true);
-      
-      let startDate, endDate;
-      if (customStartDate && customEndDate) {
-        // Özel tarih kullan
-        startDate = customStartDate;
-        endDate = customEndDate;
-      } else {
-        // Hızlı seçenek kullan
-        const dateRange = getDateRange(period || '1month');
-        startDate = dateRange.startDate;
-        endDate = dateRange.endDate;
-      }
-      
+
       const response = await ratesApi.getHistoricalRates(currency, startDate, endDate);
-      
+
       if (response.success) {
         setHistoricalRates(response.data);
         setSelectedCurrency({ currency, period: period || 'custom', startDate, endDate });
+        setCachedHistoricalRates(currency, startDate, endDate, response.data);
         if (response.data.length === 0) {
           showNotification('Seçilen tarih aralığında veri bulunamadı.', 'info');
         }

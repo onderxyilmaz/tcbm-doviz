@@ -88,3 +88,73 @@ export function mergeCachedRates(newRates) {
     console.warn('Failed to cache rates:', e);
   }
 }
+
+// --- Geçmiş (Historical) Kurlar Cache ---
+
+const HISTORICAL_CACHE_KEY = 'tcmb_historical_cache';
+
+function getHistoricalCache() {
+  try {
+    const raw = localStorage.getItem(HISTORICAL_CACHE_KEY);
+    if (!raw) return null;
+
+    const { data, date } = JSON.parse(raw);
+    const today = getTodayTurkey();
+
+    if (date === today && data && typeof data === 'object') {
+      return data;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Geçmiş kurlar için cache anahtarı oluşturur.
+ */
+function historicalCacheKey(currency, startDate, endDate) {
+  return `${currency}|${startDate}|${endDate}`;
+}
+
+/**
+ * Cache'te geçmiş kur verisi var mı kontrol eder. Varsa döndürür.
+ */
+export function getCachedHistoricalRates(currency, startDate, endDate) {
+  const data = getHistoricalCache();
+  if (!data) return null;
+
+  const key = historicalCacheKey(currency, startDate, endDate);
+  const cached = data[key];
+  return Array.isArray(cached) && cached.length > 0 ? cached : null;
+}
+
+/**
+ * Geçmiş kur verilerini cache'e yazar.
+ */
+export function setCachedHistoricalRates(currency, startDate, endDate, rates) {
+  try {
+    const today = getTodayTurkey();
+    const raw = localStorage.getItem(HISTORICAL_CACHE_KEY);
+    let data = {};
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.date === today && parsed.data) {
+          data = { ...parsed.data };
+        }
+      } catch {}
+    }
+
+    const key = historicalCacheKey(currency, startDate, endDate);
+    data[key] = rates;
+
+    localStorage.setItem(
+      HISTORICAL_CACHE_KEY,
+      JSON.stringify({ data, date: today })
+    );
+  } catch (e) {
+    console.warn('Failed to cache historical rates:', e);
+  }
+}
