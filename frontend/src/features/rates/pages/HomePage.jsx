@@ -106,10 +106,11 @@ function HomePage() {
       }
     } catch (error) {
       console.error('Error fetching rates:', error);
-      showNotification(
-        error.response?.data?.error || 'Döviz kurları yüklenirken bir hata oluştu. İnternet bağlantınızı kontrol edin.',
-        'error'
-      );
+      const isNetworkError = !error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network'));
+      const message = isNetworkError
+        ? 'API sunucusuna bağlanılamadı. Proje kök dizininden "npm run dev" ile backend ve frontend\'i birlikte başlatın.'
+        : (error.response?.data?.error || 'Döviz kurları yüklenirken bir hata oluştu. İnternet bağlantınızı kontrol edin.');
+      showNotification(message, 'error');
     } finally {
       setLoading(false);
     }
@@ -483,7 +484,7 @@ function HomePage() {
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Güncel Döviz Kurları</h2>
         <p className="text-gray-600 dark:text-gray-400">
-          TCMB'den alınan güncel döviz kurları - Geçmiş verileri görmek için bir döviz kuruna tıklayın
+          Güncel döviz kurları (ECB referans) - Geçmiş verileri görmek için bir döviz kuruna tıklayın
         </p>
       </div>
 

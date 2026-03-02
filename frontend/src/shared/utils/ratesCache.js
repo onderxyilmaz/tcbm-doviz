@@ -77,11 +77,12 @@ export function mergeCachedRates(newRates) {
 
     rates = Array.from(byCurrency.values());
 
+    // Cache tarihini her zaman bugün yap - API hafta sonu son işlem gününü döndürebilir
     localStorage.setItem(
       CACHE_KEY,
       JSON.stringify({
         rates,
-        date: newRates[0]?.date || today,
+        date: today,
       })
     );
   } catch (e) {

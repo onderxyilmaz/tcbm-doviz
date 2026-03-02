@@ -22,7 +22,6 @@ export function useSelectedCurrencies() {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedCurrencies));
-      console.log('Döviz kurları localStorage\'a kaydedildi:', selectedCurrencies);
     } catch (error) {
       console.error('Error saving currencies to localStorage:', error);
     }

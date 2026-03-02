@@ -12,7 +12,7 @@ function Layout({ children }) {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex flex-col items-start justify-center">
-                <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">TCMB Döviz Kurları</h1>
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 dark:text-white">Döviz Kurları</h1>
                 <span className="text-xs font-medium bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                   by Onder
                 </span>
