@@ -87,7 +87,7 @@ function HomePage() {
 
       // Önce cache'i kontrol et - seçili kurların hepsi varsa API'ye gitme
       const cached = getCachedRates(selectedCurrencies);
-      if (cached) {
+      if (cached && Array.isArray(cached) && cached.length > 0) {
         setRates(cached);
         setLoading(false);
         return;
@@ -98,8 +98,9 @@ function HomePage() {
       const response = await ratesApi.getCurrentRates(missing);
 
       if (response.success) {
-        mergeCachedRates(response.data);
-        setRates(getCachedRates(selectedCurrencies));
+        mergeCachedRates(Array.isArray(response.data) ? response.data : []);
+        const cachedRates = getCachedRates(selectedCurrencies);
+        setRates(Array.isArray(cachedRates) ? cachedRates : []);
       } else {
         showNotification('Döviz kurları yüklenirken bir hata oluştu.', 'error');
       }
