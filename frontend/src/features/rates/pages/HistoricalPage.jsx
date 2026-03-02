@@ -20,7 +20,7 @@ function HistoricalPage() {
     const loadCurrencies = async () => {
       try {
         const response = await ratesApi.getAllCurrencies();
-        if (response.success) {
+        if (response?.success && Array.isArray(response.data)) {
           // Sadece seçili para birimlerini göster
           const filtered = response.data.filter(c => selectedCurrencies.includes(c.code));
           setCurrencies(filtered);
@@ -250,7 +250,7 @@ function HistoricalPage() {
         <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              {currencies.find(c => c.code === currency)?.name || currency} - Geçmiş Kurlar
+              {(currencies || []).find(c => c.code === currency)?.name || currency} - Geçmiş Kurlar
             </h3>
           </div>
           <div className="overflow-x-auto">

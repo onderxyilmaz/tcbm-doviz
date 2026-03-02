@@ -36,7 +36,7 @@ function HomePage() {
     const loadCurrencyNames = async () => {
       try {
         const response = await ratesApi.getAllCurrencies();
-        if (response.success) {
+        if (response?.success && Array.isArray(response.data)) {
           const names = {};
           response.data.forEach(currency => {
             names[currency.code] = currency.name;
@@ -48,9 +48,28 @@ function HomePage() {
             { code: 'TRY', name: 'Türk Lirası', nameEn: 'Turkish Lira' }
           ];
           setAllCurrencies(currenciesWithTRY);
+        } else {
+          // API başarısız veya veri yoksa varsayılan liste kullan
+          const defaultCurrencies = [
+            { code: 'USD', name: 'ABD Doları', nameEn: 'US Dollar' },
+            { code: 'EUR', name: 'Euro', nameEn: 'Euro' },
+            { code: 'CHF', name: 'İsviçre Frangı', nameEn: 'Swiss Franc' },
+            { code: 'TRY', name: 'Türk Lirası', nameEn: 'Turkish Lira' }
+          ];
+          setAllCurrencies(defaultCurrencies);
+          setCurrencyNames({ USD: 'ABD Doları', EUR: 'Euro', CHF: 'İsviçre Frangı', TRY: 'Türk Lirası' });
         }
       } catch (error) {
         console.error('Error loading currency names:', error);
+        // Hata durumunda varsayılan liste
+        const defaultCurrencies = [
+          { code: 'USD', name: 'ABD Doları', nameEn: 'US Dollar' },
+          { code: 'EUR', name: 'Euro', nameEn: 'Euro' },
+          { code: 'CHF', name: 'İsviçre Frangı', nameEn: 'Swiss Franc' },
+          { code: 'TRY', name: 'Türk Lirası', nameEn: 'Turkish Lira' }
+        ];
+        setAllCurrencies(defaultCurrencies);
+        setCurrencyNames({ USD: 'ABD Doları', EUR: 'Euro', CHF: 'İsviçre Frangı', TRY: 'Türk Lirası' });
       }
     };
     loadCurrencyNames();
@@ -347,10 +366,11 @@ function HomePage() {
     }
 
     const amount = parseFloat(convertAmount);
+    const ratesList = rates || [];
     
     // TRY'den başka bir para birimine çevirme
     if (convertFrom === 'TRY') {
-      const toRate = rates.find(r => r.currency === convertTo);
+      const toRate = ratesList.find(r => r.currency === convertTo);
       if (!toRate) return '';
       // TRY -> Döviz: TRY miktarı / döviz satış kuru
       return (amount / toRate.sellRate).toFixed(4);
@@ -358,15 +378,15 @@ function HomePage() {
     
     // Dövizden TRY'ye çevirme
     if (convertTo === 'TRY') {
-      const fromRate = rates.find(r => r.currency === convertFrom);
+      const fromRate = ratesList.find(r => r.currency === convertFrom);
       if (!fromRate) return '';
       // Döviz -> TRY: Döviz miktarı * döviz satış kuru
       return (amount * fromRate.sellRate).toFixed(2);
     }
     
     // Dövizden dövize çevirme (TRY üzerinden)
-    const fromRate = rates.find(r => r.currency === convertFrom);
-    const toRate = rates.find(r => r.currency === convertTo);
+    const fromRate = ratesList.find(r => r.currency === convertFrom);
+    const toRate = ratesList.find(r => r.currency === convertTo);
     if (!fromRate || !toRate) return '';
     
     // Döviz1 -> TRY -> Döviz2
@@ -401,7 +421,7 @@ function HomePage() {
             onChange={(e) => setConvertFrom(e.target.value)}
             className="flex-shrink-0 w-[46px] min-[375px]:w-[52px] min-[425px]:w-[60px] sm:w-auto px-1 min-[375px]:px-1.5 min-[425px]:px-2 sm:px-3 py-1.5 min-[375px]:py-2 min-[425px]:py-2 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-[10px] min-[375px]:text-xs min-[425px]:text-xs sm:text-base"
           >
-            {allCurrencies.map((currency) => (
+            {(allCurrencies || []).map((currency) => (
               <option key={currency.code} value={currency.code}>
                 {currency.code}
               </option>
@@ -444,15 +464,15 @@ function HomePage() {
             onChange={(e) => setConvertTo(e.target.value)}
             className="flex-shrink-0 w-[46px] min-[375px]:w-[52px] min-[425px]:w-[60px] sm:w-auto px-1 min-[375px]:px-1.5 min-[425px]:px-2 sm:px-3 py-1.5 min-[375px]:py-2 min-[425px]:py-2 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 dark:focus:border-blue-400 text-[10px] min-[375px]:text-xs min-[425px]:text-xs sm:text-base"
           >
-            {allCurrencies.map((currency) => (
+            {(allCurrencies || []).map((currency) => (
               <option key={currency.code} value={currency.code}>
                 {currency.code}
               </option>
             ))}
           </select>
         </div>
-        {(!rates.find(r => r.currency === convertFrom) && convertFrom !== 'TRY') || 
-         (!rates.find(r => r.currency === convertTo) && convertTo !== 'TRY') ? (
+        {(!(rates || []).find(r => r.currency === convertFrom) && convertFrom !== 'TRY') || 
+         (!(rates || []).find(r => r.currency === convertTo) && convertTo !== 'TRY') ? (
           <p className="mt-3 text-xs sm:text-sm text-yellow-600 dark:text-yellow-400">
             ⚠️ Çeviri için seçilen para birimlerinin "Güncel Kurlar" listesinde olması gerekiyor. Lütfen Ayarlar sayfasından ilgili para birimlerini seçin.
           </p>
@@ -506,14 +526,14 @@ function HomePage() {
               </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {rates.length === 0 ? (
+              {(!rates || rates.length === 0) ? (
                 <tr>
                   <td colSpan="4" className="px-3 sm:px-6 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     Veri bulunamadı
                   </td>
                 </tr>
               ) : (
-                rates.map((rate) => (
+                (rates || []).map((rate) => (
                   <tr 
                     key={rate.currency} 
                     className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"

@@ -43,8 +43,8 @@ function SettingsPage() {
     toggleCurrency(currencyCode);
     showNotification(
       selectedCurrencies.includes(currencyCode)
-        ? `${allCurrencies.find(c => c.code === currencyCode)?.name} kaldırıldı`
-        : `${allCurrencies.find(c => c.code === currencyCode)?.name} eklendi`,
+        ? `${(allCurrencies || []).find(c => c.code === currencyCode)?.name || currencyCode} kaldırıldı`
+        : `${(allCurrencies || []).find(c => c.code === currencyCode)?.name || currencyCode} eklendi`,
       'success'
     );
   };
@@ -85,7 +85,7 @@ function SettingsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {allCurrencies.map((currency) => {
+          {(allCurrencies || []).map((currency) => {
             const isSelected = selectedCurrencies.includes(currency.code);
             return (
               <label
